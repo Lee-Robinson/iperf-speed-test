@@ -65,34 +65,6 @@ class IperfSpeedTester:
             return f"{hours}h {minutes}m" if minutes > 0 else f"{hours}h"
         else:
             return f"{minutes}m"
-    
-    def show_status(self, test_number):
-        """Show simple status like ping tool"""
-        successful_tests = [r for r in self.test_results if r["success"]]
-        failed_tests = [r for r in self.test_results if not r["success"]]
-        
-        success_rate = (len(successful_tests) / len(self.test_results)) * 100 if self.test_results else 0
-        
-        elapsed = time.time() - self.start_time if self.start_time else 0
-        elapsed_min = int(elapsed // 60)
-        elapsed_sec = int(elapsed % 60)
-        
-        # Show progress bar if duration is set
-        if self.duration:
-            progress = min(elapsed / self.duration, 1.0)
-            filled = int(progress * 20)
-            bar = "█" * filled + "░" * (20 - filled)
-            percent = int(progress * 100)
-            print(f"🔄 [{bar}] {percent}%")
-        else:
-            # Continuous mode - show activity bar
-            activity_pos = test_number % 20
-            bar = "░" * activity_pos + "█" + "░" * (19 - activity_pos)
-            print(f"🔄 [{bar}] Running...")
-        
-        print(f"📊 Status: {len(self.test_results)} tests, {len(failed_tests)} failures ({success_rate:.1f}% success)")
-        print(f"⏱️  Elapsed: {elapsed_min:02d}:{elapsed_sec:02d}")
-        print("-" * 50)
         
     def check_iperf3_installed(self):
         """Check if iperf3 is installed on the system"""
@@ -370,39 +342,30 @@ class IperfSpeedTester:
         if not self.check_iperf3_installed():
             self.install_iperf3_instructions()
             return
-        
-        # Show configuration summary
-        print("=" * 50)
-        print("✅ CONFIGURATION SUMMARY")
-        print("=" * 50)
-        print(f"📊 Server: {self.server} ({self.port})")
-        print(f"⏰ Duration: {self.format_duration(self.duration)}")
-        print(f"⏱️  Interval: {self.interval} seconds")
-        print(f"📝 Log file: {self.log_file}")
-        print(f"📄 Report file: {self.report_file}")
-        print("=" * 50)
-        
-        confirm = input("Proceed with this configuration? (y/n): ").strip().lower()
-        if confirm not in ['y', 'yes']:
-            print("👋 Cancelled.")
-            return
             
-        print()
-        print("🚀 Starting speed test monitor...")
-        print(f"📊 Target: {self.server} ({self.port})")
-        print(f"⏰ Duration: {self.format_duration(self.duration)}")
+        print(f"📊 Testing against: {self.server}:{self.port}")
+        print(f"⏱️  Test interval: {self.interval} seconds")
+        print(f"⏰ Test duration: {self.format_duration(self.duration)}")
         print(f"📝 Logging to: {self.log_file}")
-        print()
-        print("Press Ctrl+C to stop monitoring early and generate report")
-        print()
+        print(f"📄 Report will be saved to: {self.report_file}")
+        print("\nPress Ctrl+C to stop\n")
         
         # Set start time
         self.start_time = time.time()
-        test_number = 0
+        test_count = 0
         
         while self.running and self.should_continue_testing():
             try:
-                test_number += 1
+                test_count += 1
+                
+                # Simple progress indicator
+                if self.duration:
+                    elapsed = time.time() - self.start_time
+                    progress = min(elapsed / self.duration, 1.0)
+                    filled = int(progress * 20)
+                    bar = "█" * filled + "░" * (20 - filled)
+                    percent = int(progress * 100)
+                    print(f"🔄 [{bar}] {percent}%")
                 
                 result = self.run_speed_test()
                 
@@ -410,8 +373,18 @@ class IperfSpeedTester:
                 self.log_result(result)
                 self.print_result(result)
                 
-                # Show status
-                self.show_status(test_number)
+                # Show simple status
+                successful_tests = [r for r in self.test_results if r["success"]]
+                failed_tests = [r for r in self.test_results if not r["success"]]
+                success_rate = (len(successful_tests) / len(self.test_results)) * 100 if self.test_results else 0
+                
+                elapsed = time.time() - self.start_time
+                elapsed_min = int(elapsed // 60)
+                elapsed_sec = int(elapsed % 60)
+                
+                print(f"📊 Status: {len(self.test_results)} tests, {len(failed_tests)} failures ({success_rate:.1f}% success)")
+                print(f"⏱️  Elapsed: {elapsed_min:02d}:{elapsed_sec:02d}")
+                print("-" * 50)
                 
                 # Generate report every 10 tests or on failure
                 if len(self.test_results) % 10 == 0 or not result["success"]:
@@ -600,6 +573,29 @@ def main():
     
     # Get test duration from user
     duration = get_test_duration()
+    
+    print(f"\n✅ Configuration:")
+    print(f"   Server: {server}:{port}")
+    print(f"   Interval: {interval//60} minute(s)")
+    if duration:
+        hours = duration // 3600
+        minutes = (duration % 3600) // 60
+        if hours > 0:
+            duration_str = f"{hours}h {minutes}m" if minutes > 0 else f"{hours}h"
+        else:
+            duration_str = f"{minutes}m"
+        print(f"   Duration: {duration_str}")
+    else:
+        print(f"   Duration: Continuous (until stopped)")
+    print()
+    
+    # Confirm before starting
+    confirm = input("Start testing? (y/N): ").strip().lower()
+    if confirm not in ['y', 'yes']:
+        print("👋 Cancelled.")
+        return
+    
+    print()
     
     # Create and run the speed tester
     tester = IperfSpeedTester(server=server, port=port, interval=interval, duration=duration)
