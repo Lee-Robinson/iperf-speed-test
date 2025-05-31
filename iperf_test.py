@@ -29,8 +29,20 @@ class IperfSpeedTester:
         self.interval = interval
         self.duration = duration
         self.start_time = None
-        self.log_file = "iperf_speed_test.log"
-        self.report_file = "iperf_speed_report.html"
+        
+        # Create iperf-speed-test folder like ping tool
+        self.folder_name = "iperf-speed-test"
+        try:
+            os.makedirs(self.folder_name, exist_ok=True)
+            self.log_file = os.path.join(self.folder_name, "iperf_speed_test.log")
+            self.report_file = os.path.join(self.folder_name, "iperf_speed_report.html")
+        except Exception as e:
+            print(f"⚠️  Could not create folder '{self.folder_name}': {e}")
+            print("📁 Using current directory instead...")
+            self.folder_name = "."
+            self.log_file = "iperf_speed_test.log"
+            self.report_file = "iperf_speed_report.html"
+        
         self.running = True
         self.test_results = []
         
@@ -421,11 +433,11 @@ class IperfSpeedTester:
         self.generate_html_report()
         
         # Show final file locations
-        current_dir = os.getcwd()
         print(f"\n" + "=" * 50)
         print("📁 FILES GENERATED:")
-        print(f"📝 Log file: {os.path.join(current_dir, self.log_file)}")
-        print(f"📄 HTML report: {os.path.join(current_dir, self.report_file)}")
+        print(f"📝 Log file: {os.path.abspath(self.log_file)}")
+        print(f"📄 HTML report: {os.path.abspath(self.report_file)}")
+        print(f"📂 Folder: {os.path.abspath(self.folder_name)}")
         print("=" * 50)
         print("👋 Speed testing stopped.")
 
