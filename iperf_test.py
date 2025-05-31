@@ -29,50 +29,29 @@ class IperfSpeedTester:
         self.interval = interval
         self.duration = duration
         self.start_time = None
-        
-        # Create desktop folder for results
-        self.setup_results_folder()
-        
+        self.log_file = "iperf_speed_test.log"
+        self.report_file = "iperf_speed_report.html"
         self.running = True
         self.test_results = []
         
         # Setup signal handler for graceful shutdown
         signal.signal(signal.SIGINT, self.signal_handler)
         
-    def setup_results_folder(self):
-        """Create a results folder on the desktop"""
-        # Get desktop path (works on macOS, Linux, Windows)
-        if sys.platform == "darwin":  # macOS
-            desktop_path = os.path.expanduser("~/Desktop")
-        elif sys.platform == "win32":  # Windows
-            desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
-        else:  # Linux
-            desktop_path = os.path.expanduser("~/Desktop")
-            
-        # Create timestamped folder
-        timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        self.results_folder = os.path.join(desktop_path, f"IPERF_Results_{timestamp}")
+    def signal_handler(self, sig, frame):
+        """Handle Ctrl+C gracefully"""
+        print("\n\n🛑 Stopping speed tests...")
+        self.running = False
         
-        try:
-            os.makedirs(self.results_folder, exist_ok=True)
-            self.log_file = os.path.join(self.results_folder, "iperf_speed_test.log")
-            self.report_file = os.path.join(self.results_folder, "iperf_speed_report.html")
-        except Exception as e:
-            # Fallback to current directory if desktop not accessible
-            print(f"⚠️  Could not create desktop folder: {e}")
-            print("📁 Using current directory instead...")
-            self.results_folder = os.getcwd()
-            self.log_file = "iperf_speed_test.log"
-            self.report_file = "iperf_speed_report.html"
-    
-    def show_progress_bar(self, current, total, description="Progress"):
-        """Show a progress bar"""
-        bar_length = 40
-        progress = current / total
-        filled_length = int(bar_length * progress)
-        bar = '█' * filled_length + '░' * (bar_length - filled_length)
-        percent = progress * 100
-        print(f"\r{description}: [{bar}] {percent:.1f}%", end='', flush=True)
+    def should_continue_testing(self):
+        """Check if testing should continue based on duration"""
+        if self.duration is None:
+            return True  # Run continuously
+            
+        if self.start_time is None:
+            return True  # First run
+            
+        elapsed = time.time() - self.start_time
+        return elapsed < self.duration
         
     def format_duration(self, seconds):
         """Format duration in seconds to human readable format"""
@@ -86,31 +65,6 @@ class IperfSpeedTester:
             return f"{hours}h {minutes}m" if minutes > 0 else f"{hours}h"
         else:
             return f"{minutes}m"
-    
-    def get_remaining_time(self):
-        """Get remaining test time"""
-        if self.duration is None or self.start_time is None:
-            return None
-            
-        elapsed = time.time() - self.start_time
-        remaining = self.duration - elapsed
-        return max(0, remaining)
-    
-    def should_continue_testing(self):
-        """Check if testing should continue based on duration"""
-        if self.duration is None:
-            return True  # Run continuously
-            
-        if self.start_time is None:
-            return True  # First run
-            
-        elapsed = time.time() - self.start_time
-        return elapsed < self.duration
-        
-    def signal_handler(self, sig, frame):
-        """Handle Ctrl+C gracefully"""
-        print("\n\n🛑 Stopping speed tests...")
-        self.running = False
         
     def check_iperf3_installed(self):
         """Check if iperf3 is installed on the system"""
@@ -242,13 +196,6 @@ class IperfSpeedTester:
         if not self.test_results:
             return
             
-        print(f"\n📊 Generating HTML report...")
-        
-        # Show progress for report generation
-        for i in range(0, 101, 10):
-            self.show_progress_bar(i, 100, "Creating report")
-            time.sleep(0.1)
-        
         successful_tests = [r for r in self.test_results if r["success"]]
         failed_tests = [r for r in self.test_results if not r["success"]]
         
@@ -382,8 +329,6 @@ class IperfSpeedTester:
         
         with open(self.report_file, "w") as f:
             f.write(html_content)
-        
-        print("\n✅ Report generation complete!")
             
     def run(self):
         """Main run loop"""
@@ -401,9 +346,8 @@ class IperfSpeedTester:
         print(f"📊 Testing against: {self.server}:{self.port}")
         print(f"⏱️  Test interval: {self.interval} seconds")
         print(f"⏰ Test duration: {self.format_duration(self.duration)}")
-        print(f"📁 Results folder: {self.results_folder}")
-        print(f"📝 Logging to: {os.path.basename(self.log_file)}")
-        print(f"📄 Report will be saved to: {os.path.basename(self.report_file)}")
+        print(f"📝 Logging to: {self.log_file}")
+        print(f"📄 Report will be saved to: {self.report_file}")
         print("\nPress Ctrl+C to stop\n")
         
         # Set start time
@@ -411,14 +355,7 @@ class IperfSpeedTester:
         
         while self.running and self.should_continue_testing():
             try:
-                # Show remaining time if duration is set
-                remaining = self.get_remaining_time()
-                if remaining is not None:
-                    remaining_formatted = self.format_duration(int(remaining))
-                    print(f"🔄 Running speed test... (Time remaining: {remaining_formatted})", end=" ", flush=True)
-                else:
-                    print("🔄 Running speed test...", end=" ", flush=True)
-                    
+                print("🔄 Running speed test...", end=" ", flush=True)
                 result = self.run_speed_test()
                 
                 self.test_results.append(result)
@@ -428,8 +365,7 @@ class IperfSpeedTester:
                 # Generate report every 10 tests or on failure
                 if len(self.test_results) % 10 == 0 or not result["success"]:
                     self.generate_html_report()
-                
-                # Check if we should continue and sleep
+                    
                 if self.running and self.should_continue_testing():
                     time.sleep(self.interval)
                     
@@ -446,13 +382,13 @@ class IperfSpeedTester:
         # Generate final report
         self.generate_html_report()
         
-        # Show final file locations
+        # Show final file locations with full paths
+        current_dir = os.getcwd()
         print(f"\n📁 All results saved to:")
-        print(f"   Folder: {self.results_folder}")
-        print(f"   Log:    {self.log_file}")
-        print(f"   Report: {self.report_file}")
-        print(f"\n💡 To open the folder: open '{self.results_folder}'")
-        print(f"💡 To view the report: open '{self.report_file}'")
+        print(f"   📝 Log file:    {os.path.join(current_dir, self.log_file)}")
+        print(f"   📄 HTML report: {os.path.join(current_dir, self.report_file)}")
+        print(f"\n💡 To open the report: open {self.report_file}")
+        print(f"💡 To open the folder: open .")
         print("👋 Speed testing stopped.")
 
 def get_user_server_choice():
