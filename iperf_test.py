@@ -1,44 +1,4 @@
-def show_progress_bar(self, current, total, description="Progress"):
-        """Show a progress bar"""
-        bar_length = 40
-        progress = current / total
-        filled_length = int(bar_length * progress)
-        bar = '█' * filled_length + '░' * (bar_length - filled_length)
-        percent = progress * 100
-        print(f"\r{description}: [{bar}] {percent:.1f}%", end='', flush=True)
-    
-    def format_duration(self, seconds):
-        """Format duration in seconds to human readable format"""
-        if seconds is None:
-            return "Continuous"
-        
-        hours = seconds // 3600
-        minutes = (seconds % 3600) // 60
-        
-        if hours > 0:
-            return f"{hours}h {minutes}m" if minutes > 0 else f"{hours}h"
-        else:
-            return f"{minutes}m"
-    
-    def get_remaining_time(self):
-        """Get remaining test time"""
-        if self.duration is None or self.start_time is None:
-            return None
-            
-        elapsed = time.time() - self.start_time
-        remaining = self.duration - elapsed
-        return max(0, remaining)
-    
-    def should_continue_testing(self):
-        """Check if testing should continue based on duration"""
-        if self.duration is None:
-            return True  # Run continuously
-            
-        if self.start_time is None:
-            return True  # First run
-            
-        elapsed = time.time() - self.start_time
-        return elapsed < self.duration#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 IPERF Speed Test Monitor (iperf_test.py)
 A Python script to perform periodic IPERF speed tests and log results.
@@ -105,6 +65,15 @@ class IperfSpeedTester:
             self.log_file = "iperf_speed_test.log"
             self.report_file = "iperf_speed_report.html"
     
+    def show_progress_bar(self, current, total, description="Progress"):
+        """Show a progress bar"""
+        bar_length = 40
+        progress = current / total
+        filled_length = int(bar_length * progress)
+        bar = '█' * filled_length + '░' * (bar_length - filled_length)
+        percent = progress * 100
+        print(f"\r{description}: [{bar}] {percent:.1f}%", end='', flush=True)
+        
     def format_duration(self, seconds):
         """Format duration in seconds to human readable format"""
         if seconds is None:
@@ -142,39 +111,6 @@ class IperfSpeedTester:
         """Handle Ctrl+C gracefully"""
         print("\n\n🛑 Stopping speed tests...")
         self.running = False
-        
-    def format_duration(self, seconds):
-        """Format duration in seconds to human readable format"""
-        if seconds is None:
-            return "Continuous"
-        
-        hours = seconds // 3600
-        minutes = (seconds % 3600) // 60
-        
-        if hours > 0:
-            return f"{hours}h {minutes}m" if minutes > 0 else f"{hours}h"
-        else:
-            return f"{minutes}m"
-    
-    def get_remaining_time(self):
-        """Get remaining test time"""
-        if self.duration is None or self.start_time is None:
-            return None
-            
-        elapsed = time.time() - self.start_time
-        remaining = self.duration - elapsed
-        return max(0, remaining)
-    
-    def should_continue_testing(self):
-        """Check if testing should continue based on duration"""
-        if self.duration is None:
-            return True  # Run continuously
-            
-        if self.start_time is None:
-            return True  # First run
-            
-        elapsed = time.time() - self.start_time
-        return elapsed < self.duration
         
     def check_iperf3_installed(self):
         """Check if iperf3 is installed on the system"""
@@ -517,35 +453,6 @@ class IperfSpeedTester:
         print(f"   Report: {self.report_file}")
         print(f"\n💡 To open the folder: open '{self.results_folder}'")
         print(f"💡 To view the report: open '{self.report_file}'")
-        print("👋 Speed testing stopped."): {self.log_file}")
-        print(f"📄 Report will be saved to: {self.report_file}")
-        print("\nPress Ctrl+C to stop\n")
-        
-        while self.running:
-            try:
-                print("🔄 Running speed test...", end=" ", flush=True)
-                result = self.run_speed_test()
-                
-                self.test_results.append(result)
-                self.log_result(result)
-                self.print_result(result)
-                
-                # Generate report every 10 tests or on failure
-                if len(self.test_results) % 10 == 0 or not result["success"]:
-                    self.generate_html_report()
-                    
-                if self.running:  # Only sleep if we're still running
-                    time.sleep(self.interval)
-                    
-            except KeyboardInterrupt:
-                break
-            except Exception as e:
-                print(f"❌ Unexpected error: {e}")
-                time.sleep(10)  # Wait before retrying
-                
-        # Generate final report
-        self.generate_html_report()
-        print(f"\n📄 Final report saved to: {self.report_file}")
         print("👋 Speed testing stopped.")
 
 def get_user_server_choice():
@@ -610,6 +517,44 @@ def get_user_server_choice():
         else:
             print("❌ Please enter 1-10")
 
+def get_test_interval():
+    """Get test interval from user"""
+    print("\n⏱️  Test Interval Selection")
+    print("=" * 25)
+    print("1. Every 30 seconds (for short duration tests)")
+    print("2. Every 1 minute")
+    print("3. Every 5 minutes (recommended)")
+    print("4. Every 10 minutes")
+    print("5. Every 30 minutes")
+    print("6. Custom interval")
+    print()
+    
+    while True:
+        choice = input("Choose option (1-6): ").strip()
+        
+        if choice == "1":
+            return 30
+        elif choice == "2":
+            return 60
+        elif choice == "3":
+            return 300
+        elif choice == "4":
+            return 600
+        elif choice == "5":
+            return 1800
+        elif choice == "6":
+            while True:
+                try:
+                    minutes = float(input("Enter interval in minutes: ").strip())
+                    if minutes > 0:
+                        return int(minutes * 60)
+                    else:
+                        print("❌ Interval must be greater than 0")
+                except ValueError:
+                    print("❌ Please enter a valid number")
+        else:
+            print("❌ Please enter 1-6")
+
 def get_test_duration():
     """Get test duration from user"""
     print("\n⏰ Test Duration Selection")
@@ -650,44 +595,6 @@ def get_test_duration():
                     print("❌ Please enter a valid number")
         else:
             print("❌ Please enter 1-7")
-
-def get_test_interval():
-    """Get test interval from user"""
-    print("\n⏱️  Test Interval Selection")
-    print("=" * 25)
-    print("1. Every 30 seconds (for short duration tests)")
-    print("2. Every 1 minute")
-    print("3. Every 5 minutes (recommended)")
-    print("4. Every 10 minutes")
-    print("5. Every 30 minutes")
-    print("6. Custom interval")
-    print()
-    
-    while True:
-        choice = input("Choose option (1-6): ").strip()
-        
-        if choice == "1":
-            return 30
-        elif choice == "2":
-            return 60
-        elif choice == "3":
-            return 300
-        elif choice == "4":
-            return 600
-        elif choice == "5":
-            return 1800
-        elif choice == "6":
-            while True:
-                try:
-                    minutes = float(input("Enter interval in minutes: ").strip())
-                    if minutes > 0:
-                        return int(minutes * 60)
-                    else:
-                        print("❌ Interval must be greater than 0")
-                except ValueError:
-                    print("❌ Please enter a valid number")
-        else:
-            print("❌ Please enter 1-6")
 
 def main():
     """Main function"""
