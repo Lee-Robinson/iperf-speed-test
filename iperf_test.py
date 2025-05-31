@@ -30,15 +30,14 @@ class IperfSpeedTester:
         self.duration = duration
         self.start_time = None
         
-        # Create iperf-speed-test folder like ping tool
+        # Create iperf-speed-test folder
         self.folder_name = "iperf-speed-test"
         try:
             os.makedirs(self.folder_name, exist_ok=True)
             self.log_file = os.path.join(self.folder_name, "iperf_speed_test.log")
             self.report_file = os.path.join(self.folder_name, "iperf_speed_report.html")
         except Exception as e:
-            print(f"⚠️  Could not create folder '{self.folder_name}': {e}")
-            print("📁 Using current directory instead...")
+            print(f"⚠️  Could not create folder: {e}")
             self.folder_name = "."
             self.log_file = "iperf_speed_test.log"
             self.report_file = "iperf_speed_report.html"
@@ -57,10 +56,10 @@ class IperfSpeedTester:
     def should_continue_testing(self):
         """Check if testing should continue based on duration"""
         if self.duration is None:
-            return True  # Run continuously
+            return True
             
         if self.start_time is None:
-            return True  # First run
+            return True
             
         elapsed = time.time() - self.start_time
         return elapsed < self.duration
@@ -81,8 +80,7 @@ class IperfSpeedTester:
     def check_iperf3_installed(self):
         """Check if iperf3 is installed on the system"""
         try:
-            subprocess.run(["iperf3", "--version"], 
-                         capture_output=True, check=True)
+            subprocess.run(["iperf3", "--version"], capture_output=True, check=True)
             return True
         except (subprocess.CalledProcessError, FileNotFoundError):
             return False
@@ -102,19 +100,17 @@ class IperfSpeedTester:
     def run_speed_test(self):
         """Run a single IPERF speed test"""
         try:
-            # Run iperf3 client test
             cmd = [
                 "iperf3",
                 "-c", self.server,
                 "-p", str(self.port),
-                "-J",  # JSON output
-                "-t", "10"  # 10 second test
+                "-J",
+                "-t", "10"
             ]
             
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
             
             if result.returncode == 0:
-                # Parse JSON output
                 data = json.loads(result.stdout)
                 return self.parse_iperf_result(data)
             else:
@@ -150,7 +146,6 @@ class IperfSpeedTester:
             sum_sent = end_data.get("sum_sent", {})
             sum_received = end_data.get("sum_received", {})
             
-            # Convert bits per second to Mbps
             upload_bps = sum_sent.get("bits_per_second", 0)
             download_bps = sum_received.get("bits_per_second", 0)
             
@@ -312,7 +307,6 @@ class IperfSpeedTester:
         </tr>
 """
         
-        # Add last 50 results
         for result in self.test_results[-50:]:
             timestamp = datetime.datetime.fromisoformat(result["timestamp"]).strftime("%H:%M:%S")
             if result["success"]:
@@ -355,17 +349,13 @@ class IperfSpeedTester:
             self.install_iperf3_instructions()
             return
         
-        # Configuration summary exactly like ping tool
+        # Configuration summary
         print("✅ CONFIGURATION SUMMARY")
         print("=" * 50)
         print(f"📊 Server: {self.server} ({self.port})")
-        if self.duration:
-            duration_text = self.format_duration(self.duration)
-        else:
-            duration_text = "Continuous"
-        print(f"⏰ Duration: {duration_text}")
+        print(f"⏰ Duration: {self.format_duration(self.duration)}")
         
-        # Fix interval display
+        # Format interval properly
         interval_minutes = self.interval // 60
         interval_seconds = self.interval % 60
         if interval_minutes > 0:
@@ -391,13 +381,10 @@ class IperfSpeedTester:
         
         # Set start time
         self.start_time = time.time()
-        test_count = 0
         
         while self.running and self.should_continue_testing():
             try:
-                test_count += 1
-                
-                # Simple progress indicator
+                # Progress bar for timed tests
                 if self.duration:
                     elapsed = time.time() - self.start_time
                     progress = min(elapsed / self.duration, 1.0)
@@ -412,7 +399,7 @@ class IperfSpeedTester:
                 self.log_result(result)
                 self.print_result(result)
                 
-                # Show simple status
+                # Status display
                 successful_tests = [r for r in self.test_results if r["success"]]
                 failed_tests = [r for r in self.test_results if not r["success"]]
                 success_rate = (len(successful_tests) / len(self.test_results)) * 100 if self.test_results else 0
@@ -421,25 +408,11 @@ class IperfSpeedTester:
                 elapsed_min = int(elapsed // 60)
                 elapsed_sec = int(elapsed % 60)
                 
-                # Calculate remaining time
-                if self.duration:
-                    remaining = max(0, self.duration - elapsed)
-                    remaining_min = int(remaining // 60)
-                    if remaining_min > 60:
-                        remaining_hours = remaining_min // 60
-                        remaining_min = remaining_min % 60
-                        remaining_str = f"{remaining_hours}h {remaining_min}m"
-                    else:
-                        remaining_str = f"{remaining_min}m"
-                    print(f"📊 Status: {len(self.test_results)} tests, {len(failed_tests)} failures ({success_rate:.1f}% success)")
-                    print(f"⏱️  Elapsed: {elapsed_min:02d}:{elapsed_sec:02d} | Remaining: {remaining_str}")
-                else:
-                    print(f"📊 Status: {len(self.test_results)} tests, {len(failed_tests)} failures ({success_rate:.1f}% success)")
-                    print(f"⏱️  Elapsed: {elapsed_min:02d}:{elapsed_sec:02d} | Remaining: ∞")
-                
+                print(f"📊 Status: {len(self.test_results)} tests, {len(failed_tests)} failures ({success_rate:.1f}% success)")
+                print(f"⏱️  Elapsed: {elapsed_min:02d}:{elapsed_sec:02d}")
                 print("-" * 50)
                 
-                # Generate report every 10 tests or on failure
+                # Generate report every 10 tests
                 if len(self.test_results) % 10 == 0 or not result["success"]:
                     self.generate_html_report()
                     
@@ -450,95 +423,17 @@ class IperfSpeedTester:
                 break
             except Exception as e:
                 print(f"❌ Unexpected error: {e}")
-                time.sleep(10)  # Wait before retrying
+                time.sleep(10)
         
-        # Check if we finished due to time limit
-        if not self.should_continue_testing() and self.running:
-            print(f"\n⏰ Test duration completed! Ran for {self.format_duration(self.duration)}")
-                
         # Generate final report
         self.generate_html_report()
         
-        # Show comprehensive test summary like ping tool
-        print("\n" + "=" * 60)
-        print("🏁 TEST COMPLETE")
-        print("=" * 60)
-        
-        # Calculate test summary statistics
-        successful_tests = [r for r in self.test_results if r["success"]]
-        failed_tests = [r for r in self.test_results if not r["success"]]
-        total_elapsed = time.time() - self.start_time if self.start_time else 0
-        
-        # Format elapsed time
-        elapsed_hours = int(total_elapsed // 3600)
-        elapsed_minutes = int((total_elapsed % 3600) // 60)
-        elapsed_seconds = int(total_elapsed % 60)
-        elapsed_str = f"{elapsed_hours:02d}:{elapsed_minutes:02d}:{elapsed_seconds:02d}"
-        
-        # Calculate speed statistics
-        if successful_tests:
-            avg_upload = sum(r["upload_mbps"] for r in successful_tests) / len(successful_tests)
-            avg_download = sum(r["download_mbps"] for r in successful_tests) / len(successful_tests)
-            max_upload = max(r["upload_mbps"] for r in successful_tests)
-            max_download = max(r["download_mbps"] for r in successful_tests)
-            min_upload = min(r["upload_mbps"] for r in successful_tests)
-            min_download = min(r["download_mbps"] for r in successful_tests)
-        else:
-            avg_upload = avg_download = max_upload = max_download = min_upload = min_download = 0
-        
-        success_rate = (len(successful_tests) / len(self.test_results)) * 100 if self.test_results else 0
-        
-        # Test Summary
-        print("📋 TEST SUMMARY:")
-        print(f"Server: {self.server} ({self.port})")
-        print(f"Duration: {elapsed_str} (planned: {self.format_duration(self.duration)})")
-        if not self.should_continue_testing() and self.running:
-            print("Status: Completed")
-        else:
-            print("Status: Interrupted")
-        print(f"System: {os.uname().sysname} {os.uname().release}" if hasattr(os, 'uname') else "System: Unknown")
-        print()
-        
-        # Results
-        print("📊 RESULTS:")
-        print(f"Total Tests: {len(self.test_results)}")
-        print(f"Successful: {len(successful_tests)}")
-        print(f"Failed: {len(failed_tests)}")
-        print(f"Success Rate: {success_rate:.2f}%")
-        if successful_tests:
-            print(f"Avg Upload: {avg_upload:.2f} Mbps")
-            print(f"Avg Download: {avg_download:.2f} Mbps")
-            print(f"Peak Upload: {max_upload:.2f} Mbps")
-            print(f"Peak Download: {max_download:.2f} Mbps")
-        print()
-        
-        # Test Reliability Assessment (based on test reliability only)
-        if success_rate >= 98 and len(failed_tests) == 0:
-            quality_status = "🟢 EXCELLENT - All tests completed successfully"
-        elif success_rate >= 95:
-            quality_status = "🟡 GOOD - Minor test failures detected"
-        elif success_rate >= 85:
-            quality_status = "🟠 FAIR - Some test failures detected"
-        else:
-            quality_status = "🔴 POOR - Significant test failures detected"
-        
-        print(f"🌐 TEST RELIABILITY: {quality_status}")
-        print()
-        
-        print("📄 Generating detailed reports...")
-        print(f"Report generated: {os.path.basename(self.report_file)}")
-        print()
-        
-        print("=" * 60)
-        print("📁 REPORTS GENERATED:")
-        print(f"📝 Text Log: {os.path.abspath(self.log_file)}")
-        print(f"📄 HTML Report: {os.path.abspath(self.report_file)}")
-        print("=" * 60)
-        
-        print("💡 NEXT STEPS:")
-        print("• Open the HTML report in your browser for detailed analysis")
-        print("• Share the HTML report with your ISP or IT support team")
-        print("=" * 60)
+        # Show final results
+        print(f"\n" + "=" * 50)
+        print("📁 FILES GENERATED:")
+        print(f"📝 Log file: {os.path.abspath(self.log_file)}")
+        print(f"📄 HTML report: {os.path.abspath(self.report_file)}")
+        print("=" * 50)
         print("👋 Speed testing stopped.")
 
 def get_user_server_choice():
@@ -659,25 +554,25 @@ def get_test_duration():
         choice = input("Choose option (1-8): ").strip()
         
         if choice == "1":
-            return 1800  # 30 minutes in seconds
+            return 1800
         elif choice == "2":
-            return 3600  # 1 hour in seconds
+            return 3600
         elif choice == "3":
-            return 7200  # 2 hours
+            return 7200
         elif choice == "4":
-            return 14400  # 4 hours
+            return 14400
         elif choice == "5":
-            return 28800  # 8 hours
+            return 28800
         elif choice == "6":
-            return 86400  # 24 hours
+            return 86400
         elif choice == "7":
-            return None  # Run continuously
+            return None
         elif choice == "8":
             while True:
                 try:
                     hours = float(input("Enter duration in hours (0.1 to 24): ").strip())
                     if 0.1 <= hours <= 24:
-                        return int(hours * 3600)  # Convert to seconds
+                        return int(hours * 3600)
                     else:
                         print("❌ Duration must be between 0.1 and 24 hours")
                 except ValueError:
@@ -694,16 +589,12 @@ def main():
     print("=" * 50)
     print()
     
-    # Get server choice from user
+    # Get user choices
     server, port = get_user_server_choice()
-    
-    # Get test interval from user
     interval = get_test_interval()
-    
-    # Get test duration from user
     duration = get_test_duration()
     
-    # Create and run the speed tester (no initial configuration display)
+    # Create and run the speed tester
     tester = IperfSpeedTester(server=server, port=port, interval=interval, duration=duration)
     tester.run()
 
