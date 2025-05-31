@@ -92,35 +92,43 @@ sudo apt update && sudo apt install iperf3
 sudo yum install iperf3  # or dnf install iperf3
 ```
 
-### Quick Start - One Command Download & Run
+### Quick Start - One Command Install & Run
 ```bash
-# Download and run immediately
-curl -O https://raw.githubusercontent.com/Lee-Robinson/iperf-speed-test/main/iperf_test.py && python3 iperf_test.py
+# Clone and run immediately (recommended)
+git clone https://github.com/Lee-Robinson/iperf-speed-test.git && cd iperf-speed-test && python3 iperf_test.py
 ```
 
 ### Alternative Installation Methods
 
-**Option 1: Git Clone**
+**Option 1: Git Clone (Recommended)**
 ```bash
 git clone https://github.com/Lee-Robinson/iperf-speed-test.git
 cd iperf-speed-test
 python3 iperf_test.py
 ```
 
-**Option 2: wget (Linux/macOS)**
+**Option 2: Direct Download & Run**
+```bash
+# Download and run immediately
+curl -O https://raw.githubusercontent.com/Lee-Robinson/iperf-speed-test/main/iperf_test.py && python3 iperf_test.py
+```
+
+**Option 3: wget (Linux/macOS)**
 ```bash
 wget https://raw.githubusercontent.com/Lee-Robinson/iperf-speed-test/main/iperf_test.py
 python3 iperf_test.py
 ```
 
-**Option 3: Manual Download**
+**Option 4: Manual Download**
 1. Download `iperf_test.py` from the repository
 2. Run: `python3 iperf_test.py`
 
 ## Usage
 
-### 1. Run the Script
+### 1. Install and Run (Recommended Method)
 ```bash
+git clone https://github.com/Lee-Robinson/iperf-speed-test.git
+cd iperf-speed-test
 python3 iperf_test.py
 ```
 
@@ -149,8 +157,20 @@ The script will guide you through three simple configuration steps:
 - **Automatic report generation** every 10 tests
 
 ### 4. Review Results
-- **Text log**: `iperf_speed_test.log` with detailed test data
-- **HTML report**: `iperf_speed_report.html` with interactive charts and statistics
+The script creates an organized `iperf-speed-test` folder containing:
+- **Text log**: `iperf-speed-test/iperf_speed_test.log` with detailed test data
+- **HTML report**: `iperf-speed-test/iperf_speed_report.html` with interactive charts and statistics
+
+### File Organization
+```
+iperf-speed-test/
+├── iperf_test.py                 # Main script
+├── iperf-speed-test/            # Results folder (auto-created)
+│   ├── iperf_speed_test.log     # Detailed log file
+│   └── iperf_speed_report.html  # Interactive HTML report
+├── README.md                    # Documentation
+└── LICENSE                      # MIT License
+```
 
 ## Server Options
 
@@ -238,7 +258,16 @@ When selecting "Enter custom server":
 3. Ensure the server supports IPERF3 protocol
 
 ### Automated Runs
-For automated/scheduled runs, you can modify the script to skip interactive prompts by hardcoding your preferred settings in the `main()` function.
+For automated/scheduled runs, you can modify the script to skip interactive prompts by hardcoding your preferred settings in the `main()` function, or use the git clone method for easier updates:
+
+```bash
+# Set up once
+git clone https://github.com/Lee-Robinson/iperf-speed-test.git
+cd iperf-speed-test
+
+# Run anytime with latest updates
+git pull && python3 iperf_test.py
+```
 
 ## Contributing
 
@@ -265,5 +294,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Inspired by professional network monitoring tools
 
 ---
+
+⭐ **Star this repository if you find it useful!**
 
 ⭐ **Star this repository if you find it useful!**
