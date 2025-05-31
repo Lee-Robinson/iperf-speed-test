@@ -352,29 +352,44 @@ class IperfSpeedTester:
 def get_user_server_choice():
     """Get server choice from user"""
     print("🌐 IPERF Server Selection")
-    print("=" * 30)
-    print("1. ams.speedtest.clouvider.net (Amsterdam) - Reliable")
-    print("2. speedtest.wtnet.de (Germany) - High speed")
-    print("3. speedtest.init7.net (Switzerland) - Stable")
-    print("4. lon.speedtest.clouvider.net (London) - UK")
-    print("5. nyc.speedtest.clouvider.net (New York) - US")
-    print("6. Enter custom server")
+    print("=" * 40)
+    print("🇬🇧 UK Servers (Recommended for UK users):")
+    print("1. iperf.as42831.net (London) - UK Servers, Reliable")
+    print("2. speedtest.lon1.uk.leaseweb.net (London) - LeaseWeb")
+    print("3. speedtest.lon12.uk.leaseweb.net (London) - LeaseWeb Alt")
+    print("4. lon.speedtest.clouvider.net (London) - Clouvider")
+    print("5. 185.59.221.51 (London) - DATAPACKET")
+    print()
+    print("🌍 International Servers:")
+    print("6. ams.speedtest.clouvider.net (Amsterdam) - Very Reliable")
+    print("7. speedtest.wtnet.de (Germany) - High Speed")
+    print("8. speedtest.init7.net (Switzerland) - Stable")
+    print("9. nyc.speedtest.clouvider.net (New York) - US")
+    print("10. Enter custom server")
     print()
     
     while True:
-        choice = input("Choose option (1-6): ").strip()
+        choice = input("Choose option (1-10): ").strip()
         
         if choice == "1":
-            return "ams.speedtest.clouvider.net", 5200
+            return "iperf.as42831.net", 5300
         elif choice == "2":
-            return "speedtest.wtnet.de", 5200
+            return "speedtest.lon1.uk.leaseweb.net", 5201
         elif choice == "3":
-            return "speedtest.init7.net", 5201
+            return "speedtest.lon12.uk.leaseweb.net", 5201
         elif choice == "4":
             return "lon.speedtest.clouvider.net", 5200
         elif choice == "5":
-            return "nyc.speedtest.clouvider.net", 5200
+            return "185.59.221.51", 5201
         elif choice == "6":
+            return "ams.speedtest.clouvider.net", 5200
+        elif choice == "7":
+            return "speedtest.wtnet.de", 5200
+        elif choice == "8":
+            return "speedtest.init7.net", 5201
+        elif choice == "9":
+            return "nyc.speedtest.clouvider.net", 5200
+        elif choice == "10":
             while True:
                 server = input("Enter IPERF server address: ").strip()
                 if server:
@@ -394,7 +409,7 @@ def get_user_server_choice():
             
             return server, port
         else:
-            print("❌ Please enter 1, 2, 3, 4, 5, or 6")
+            print("❌ Please enter 1-10")
 
 def get_test_interval():
     """Get test interval from user"""
