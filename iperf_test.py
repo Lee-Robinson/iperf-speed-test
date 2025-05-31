@@ -1,15 +1,4 @@
-def format_duration(self, seconds):
-        """Format duration in seconds to human readable format"""
-        if seconds is None:
-            return "Continuous"
-        
-        hours = seconds // 3600
-        minutes = (seconds % 3600) // 60
-        
-        if hours > 0:
-            return f"{hours}h {minutes}m" if minutes > 0 else f"{hours}h"
-        else:
-            return f"{minutes}m"#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 IPERF Speed Test Monitor (iperf_test.py)
 A Python script to perform periodic IPERF speed tests and log results.
@@ -64,54 +53,46 @@ class IperfSpeedTester:
         elapsed = time.time() - self.start_time
         return elapsed < self.duration
         
-    def format_elapsed_time(self, seconds):
-        """Format elapsed time as MM:SS"""
-        minutes = int(seconds // 60)
-        seconds = int(seconds % 60)
-        return f"{minutes:02d}:{seconds:02d}"
-    
-    def format_remaining_time(self, seconds):
-        """Format remaining time"""
+    def format_duration(self, seconds):
+        """Format duration in seconds to human readable format"""
         if seconds is None:
-            return "∞"
-        minutes = int(seconds // 60)
-        if minutes > 60:
-            hours = minutes // 60
-            minutes = minutes % 60
-            return f"{hours}h {minutes}m"
+            return "Continuous"
+        
+        hours = seconds // 3600
+        minutes = (seconds % 3600) // 60
+        
+        if hours > 0:
+            return f"{hours}h {minutes}m" if minutes > 0 else f"{hours}h"
         else:
             return f"{minutes}m"
     
-    def show_status_bar(self, test_number):
-        """Show progress status bar like ping tool"""
-        if self.duration is None:
-            # Continuous mode - show simple progress
-            progress_bar = "█" * min(20, test_number) + "░" * max(0, 20 - test_number)
-            print(f"🔄 [{progress_bar}] Running...")
-        else:
-            # Timed mode - show percentage progress
-            elapsed = time.time() - self.start_time
-            progress = min(elapsed / self.duration, 1.0)
-            filled = int(progress * 20)
-            bar = "█" * filled + "░" * (20 - filled)
-            percent = int(progress * 100)
-            print(f"🔄 [{bar}] {percent}%")
-    
-    def show_test_summary(self, test_number):
-        """Show test summary like ping tool"""
+    def show_status(self, test_number):
+        """Show simple status like ping tool"""
         successful_tests = [r for r in self.test_results if r["success"]]
         failed_tests = [r for r in self.test_results if not r["success"]]
         
         success_rate = (len(successful_tests) / len(self.test_results)) * 100 if self.test_results else 0
         
         elapsed = time.time() - self.start_time if self.start_time else 0
-        remaining = None
+        elapsed_min = int(elapsed // 60)
+        elapsed_sec = int(elapsed % 60)
+        
+        # Show progress bar if duration is set
         if self.duration:
-            remaining = max(0, self.duration - elapsed)
+            progress = min(elapsed / self.duration, 1.0)
+            filled = int(progress * 20)
+            bar = "█" * filled + "░" * (20 - filled)
+            percent = int(progress * 100)
+            print(f"🔄 [{bar}] {percent}%")
+        else:
+            # Continuous mode - show activity bar
+            activity_pos = test_number % 20
+            bar = "░" * activity_pos + "█" + "░" * (19 - activity_pos)
+            print(f"🔄 [{bar}] Running...")
         
         print(f"📊 Status: {len(self.test_results)} tests, {len(failed_tests)} failures ({success_rate:.1f}% success)")
-        print(f"⏱️  Elapsed: {self.format_elapsed_time(elapsed)} | Remaining: {self.format_remaining_time(remaining)}")
-        print("-" * 60)
+        print(f"⏱️  Elapsed: {elapsed_min:02d}:{elapsed_sec:02d}")
+        print("-" * 50)
         
     def check_iperf3_installed(self):
         """Check if iperf3 is installed on the system"""
@@ -389,17 +370,28 @@ class IperfSpeedTester:
         if not self.check_iperf3_installed():
             self.install_iperf3_instructions()
             return
-            
-        # Show configuration summary like ping tool
-        if not self.show_configuration_summary():
-            return
         
+        # Show configuration summary
+        print("=" * 50)
+        print("✅ CONFIGURATION SUMMARY")
+        print("=" * 50)
+        print(f"📊 Server: {self.server} ({self.port})")
+        print(f"⏰ Duration: {self.format_duration(self.duration)}")
+        print(f"⏱️  Interval: {self.interval} seconds")
+        print(f"📝 Log file: {self.log_file}")
+        print(f"📄 Report file: {self.report_file}")
+        print("=" * 50)
+        
+        confirm = input("Proceed with this configuration? (y/n): ").strip().lower()
+        if confirm not in ['y', 'yes']:
+            print("👋 Cancelled.")
+            return
+            
         print()
         print("🚀 Starting speed test monitor...")
         print(f"📊 Target: {self.server} ({self.port})")
         print(f"⏰ Duration: {self.format_duration(self.duration)}")
         print(f"📝 Logging to: {self.log_file}")
-        print(f"📄 Report will be saved to: {self.report_file}")
         print()
         print("Press Ctrl+C to stop monitoring early and generate report")
         print()
@@ -412,17 +404,14 @@ class IperfSpeedTester:
             try:
                 test_number += 1
                 
-                # Show status bar
-                self.show_status_bar(test_number)
-                
                 result = self.run_speed_test()
                 
                 self.test_results.append(result)
                 self.log_result(result)
                 self.print_result(result)
                 
-                # Show summary every test
-                self.show_test_summary(test_number)
+                # Show status
+                self.show_status(test_number)
                 
                 # Generate report every 10 tests or on failure
                 if len(self.test_results) % 10 == 0 or not result["success"]:
@@ -444,7 +433,7 @@ class IperfSpeedTester:
         # Generate final report
         self.generate_html_report()
         
-        # Show final file locations in clean format like ping tool
+        # Show final file locations
         current_dir = os.getcwd()
         print(f"\n" + "=" * 50)
         print("📁 FILES GENERATED:")
