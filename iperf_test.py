@@ -9,25 +9,7 @@ def format_duration(self, seconds):
         if hours > 0:
             return f"{hours}h {minutes}m" if minutes > 0 else f"{hours}h"
         else:
-            return f"{minutes}m"
-    
-    def show_configuration_summary(self):
-        """Show configuration summary like ping tool"""
-        print("=" * 50)
-        print("✅ CONFIGURATION SUMMARY")
-        print("=" * 50)
-        print(f"📊 Server: {self.server} ({self.port})")
-        print(f"⏰ Duration: {self.format_duration(self.duration)}")
-        print(f"⏱️  Interval: {self.interval} seconds")
-        print(f"📝 Log file: {self.log_file}")
-        print(f"📄 Report file: {self.report_file}")
-        print("=" * 50)
-        
-        confirm = input("Proceed with this configuration? (y/n): ").strip().lower()
-        if confirm not in ['y', 'yes']:
-            print("👋 Cancelled.")
-            return False
-        return True#!/usr/bin/env python3
+            return f"{minutes}m"#!/usr/bin/env python3
 """
 IPERF Speed Test Monitor (iperf_test.py)
 A Python script to perform periodic IPERF speed tests and log results.
