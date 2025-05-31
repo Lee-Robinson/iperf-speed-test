@@ -157,17 +157,16 @@ The script will guide you through three simple configuration steps:
 - **Automatic report generation** every 10 tests
 
 ### 4. Review Results
-The script creates an organized `iperf-speed-test` folder containing:
-- **Text log**: `iperf-speed-test/iperf_speed_test.log` with detailed test data
-- **HTML report**: `iperf-speed-test/iperf_speed_report.html` with interactive charts and statistics
+The script saves files directly in the `iperf-speed-test` folder:
+- **Text log**: `iperf_speed_test.log` with detailed test data
+- **HTML report**: `iperf_speed_report.html` with interactive charts and statistics
 
 ### File Organization
 ```
 iperf-speed-test/
-├── iperf_test.py                 # Main script
-├── iperf-speed-test/            # Results folder (auto-created)
-│   ├── iperf_speed_test.log     # Detailed log file
-│   └── iperf_speed_report.html  # Interactive HTML report
+├── iperf_test.py                # Main script
+├── iperf_speed_test.log         # Detailed log file (generated)
+├── iperf_speed_report.html      # Interactive HTML report (generated)
 ├── README.md                    # Documentation
 └── LICENSE                      # MIT License
 ```
@@ -290,11 +289,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - Built using the excellent [iperf3](https://iperf.fr/) network testing tool
 - Public server list curated from [iperf3serverlist.net](https://iperf3serverlist.net/)
-- UK server selection optimised for Birmingham and Midlands users
+- UK server selection optimized for Birmingham and Midlands users
 - Inspired by professional network monitoring tools
 
 ---
-
-⭐ **Star this repository if you find it useful!**
 
 ⭐ **Star this repository if you find it useful!**
