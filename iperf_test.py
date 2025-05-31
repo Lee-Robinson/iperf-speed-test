@@ -408,8 +408,23 @@ class IperfSpeedTester:
                 elapsed_min = int(elapsed // 60)
                 elapsed_sec = int(elapsed % 60)
                 
-                print(f"📊 Status: {len(self.test_results)} tests, {len(failed_tests)} failures ({success_rate:.1f}% success)")
-                print(f"⏱️  Elapsed: {elapsed_min:02d}:{elapsed_sec:02d}")
+                # Calculate remaining time
+                if self.duration:
+                    remaining = max(0, self.duration - elapsed)
+                    remaining_min = int(remaining // 60)
+                    if remaining_min > 60:
+                        remaining_hours = remaining_min // 60
+                        remaining_min = remaining_min % 60
+                        remaining_str = f"{remaining_hours}h {remaining_min}m"
+                    else:
+                        remaining_str = f"{remaining_min}m"
+                    
+                    print(f"📊 Status: {len(self.test_results)} tests, {len(failed_tests)} failures ({success_rate:.1f}% success)")
+                    print(f"⏱️  Elapsed: {elapsed_min}:{elapsed_sec:02d} | Remaining: {remaining_str}")
+                else:
+                    print(f"📊 Status: {len(self.test_results)} tests, {len(failed_tests)} failures ({success_rate:.1f}% success)")
+                    print(f"⏱️  Elapsed: {elapsed_min}:{elapsed_sec:02d} | Remaining: ∞")
+                
                 print("-" * 50)
                 
                 # Generate report every 10 tests
