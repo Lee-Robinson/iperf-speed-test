@@ -361,14 +361,14 @@ class IperfSpeedTester:
         print("=" * 50)
         print(f"📊 Server: {self.server} ({self.port})")
         if self.duration:
-            print(f"⏰ Duration: {self.format_duration(self.duration)}")
+            duration_text = self.format_duration(self.duration)
         else:
-            print(f"⏰ Duration: Continuous (continuous monitoring)")
+            duration_text = "Continuous"
+        print(f"⏰ Duration: {duration_text}")
         print(f"⏱️  Interval: {self.interval} second{'s' if self.interval != 1 else ''} (continuous monitoring)")
         print(f"📝 Log file: {os.path.basename(self.log_file)}")
         print(f"📄 Report file: {os.path.basename(self.report_file)}")
         print("=" * 50)
-        print()
         
         confirm = input("Proceed with this configuration? (y/n): ").strip().lower()
         if confirm not in ['y', 'yes']:
