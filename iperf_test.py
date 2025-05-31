@@ -355,8 +355,7 @@ class IperfSpeedTester:
             self.install_iperf3_instructions()
             return
         
-        # Configuration summary like ping tool
-        print("=" * 50)
+        # Configuration summary exactly like ping tool
         print("✅ CONFIGURATION SUMMARY")
         print("=" * 50)
         print(f"📊 Server: {self.server} ({self.port})")
