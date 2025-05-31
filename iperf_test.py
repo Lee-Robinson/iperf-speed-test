@@ -1,34 +1,4 @@
-print(f"\n✅ Configuration:")
-    print(f"   Server: {server}:{port}")
-    interval_minutes = interval // 60
-    interval_seconds = interval % 60
-    if interval_minutes > 0:
-        if interval_seconds > 0:
-            interval_str = f"{interval_minutes} minute(s) {interval_seconds} second(s)"
-        else:
-            interval_str = f"{interval_minutes} minute(s)"
-    else:
-        interval_str = f"{interval_seconds} second(s)"
-    print(f"   Interval: {interval_str}")
-    if duration:
-        hours = duration // 3600
-        minutes = (duration % 3600) // 60
-        if hours > 0:
-            duration_str = f"{hours}h {minutes}m" if minutes > 0 else f"{hours}h"
-        else:
-            duration_str = f"{minutes}m"
-        print(f"   Duration: {duration_str}")
-    else:
-        print(f"   Duration: Continuous (until stopped)")
-    print()
-    
-    # Confirm before starting
-    confirm = input("Start testing? (y/N): ").strip().lower()
-    if confirm not in ['y', 'yes']:
-        print("👋 Cancelled.")
-        return
-    
-    print()#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 IPERF Speed Test Monitor (iperf_test.py)
 A Python script to perform periodic IPERF speed tests and log results.
@@ -410,6 +380,7 @@ class IperfSpeedTester:
         print(f"📝 Log file: {os.path.basename(self.log_file)}")
         print(f"📄 Report file: {os.path.basename(self.report_file)}")
         print("=" * 50)
+        print()
         
         confirm = input("Proceed with this configuration? (y/n): ").strip().lower()
         if confirm not in ['y', 'yes']:
@@ -541,7 +512,7 @@ class IperfSpeedTester:
             print(f"Peak Download: {max_download:.2f} Mbps")
         print()
         
-        # Network Quality Assessment (based on test reliability only)
+        # Test Reliability Assessment (based on test reliability only)
         if success_rate >= 98 and len(failed_tests) == 0:
             quality_status = "🟢 EXCELLENT - All tests completed successfully"
         elif success_rate >= 95:
@@ -732,30 +703,7 @@ def main():
     # Get test duration from user
     duration = get_test_duration()
     
-    print(f"\n✅ Configuration:")
-    print(f"   Server: {server}:{port}")
-    print(f"   Interval: {interval//60} minute(s)")
-    if duration:
-        hours = duration // 3600
-        minutes = (duration % 3600) // 60
-        if hours > 0:
-            duration_str = f"{hours}h {minutes}m" if minutes > 0 else f"{hours}h"
-        else:
-            duration_str = f"{minutes}m"
-        print(f"   Duration: {duration_str}")
-    else:
-        print(f"   Duration: Continuous (until stopped)")
-    print()
-    
-    # Confirm before starting
-    confirm = input("Start testing? (y/N): ").strip().lower()
-    if confirm not in ['y', 'yes']:
-        print("👋 Cancelled.")
-        return
-    
-    print()
-    
-    # Create and run the speed tester
+    # Create and run the speed tester (no initial configuration display)
     tester = IperfSpeedTester(server=server, port=port, interval=interval, duration=duration)
     tester.run()
 
