@@ -354,13 +354,6 @@ class IperfSpeedTester:
         if not self.check_iperf3_installed():
             self.install_iperf3_instructions()
             return
-            
-        print(f"📊 Testing against: {self.server}:{self.port}")
-        print(f"⏱️  Test interval: {self.interval} seconds")
-        print(f"⏰ Test duration: {self.format_duration(self.duration)}")
-        print(f"📝 Logging to: {self.log_file}")
-        print(f"📄 Report will be saved to: {self.report_file}")
-        print()
         
         # Configuration summary like ping tool
         print("=" * 50)
