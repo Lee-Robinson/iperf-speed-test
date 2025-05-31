@@ -143,6 +143,39 @@ class IperfSpeedTester:
         print("\n\n🛑 Stopping speed tests...")
         self.running = False
         
+    def format_duration(self, seconds):
+        """Format duration in seconds to human readable format"""
+        if seconds is None:
+            return "Continuous"
+        
+        hours = seconds // 3600
+        minutes = (seconds % 3600) // 60
+        
+        if hours > 0:
+            return f"{hours}h {minutes}m" if minutes > 0 else f"{hours}h"
+        else:
+            return f"{minutes}m"
+    
+    def get_remaining_time(self):
+        """Get remaining test time"""
+        if self.duration is None or self.start_time is None:
+            return None
+            
+        elapsed = time.time() - self.start_time
+        remaining = self.duration - elapsed
+        return max(0, remaining)
+    
+    def should_continue_testing(self):
+        """Check if testing should continue based on duration"""
+        if self.duration is None:
+            return True  # Run continuously
+            
+        if self.start_time is None:
+            return True  # First run
+            
+        elapsed = time.time() - self.start_time
+        return elapsed < self.duration
+        
     def check_iperf3_installed(self):
         """Check if iperf3 is installed on the system"""
         try:
