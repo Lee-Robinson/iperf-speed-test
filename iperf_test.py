@@ -360,6 +360,28 @@ class IperfSpeedTester:
         print(f"⏰ Test duration: {self.format_duration(self.duration)}")
         print(f"📝 Logging to: {self.log_file}")
         print(f"📄 Report will be saved to: {self.report_file}")
+        print()
+        
+        # Configuration summary like ping tool
+        print("=" * 50)
+        print("✅ CONFIGURATION SUMMARY")
+        print("=" * 50)
+        print(f"📊 Server: {self.server} ({self.port})")
+        if self.duration:
+            print(f"⏰ Duration: {self.format_duration(self.duration)}")
+        else:
+            print(f"⏰ Duration: Continuous (continuous monitoring)")
+        print(f"⏱️  Interval: {self.interval} second{'s' if self.interval != 1 else ''} (continuous monitoring)")
+        print(f"📝 Log file: {os.path.basename(self.log_file)}")
+        print(f"📄 Report file: {os.path.basename(self.report_file)}")
+        print("=" * 50)
+        print()
+        
+        confirm = input("Proceed with this configuration? (y/n): ").strip().lower()
+        if confirm not in ['y', 'yes']:
+            print("👋 Cancelled.")
+            return
+        
         print("\nPress Ctrl+C to stop\n")
         
         # Set start time
@@ -432,13 +454,86 @@ class IperfSpeedTester:
         # Generate final report
         self.generate_html_report()
         
-        # Show final file locations
-        print(f"\n" + "=" * 50)
-        print("📁 FILES GENERATED:")
-        print(f"📝 Log file: {os.path.abspath(self.log_file)}")
-        print(f"📄 HTML report: {os.path.abspath(self.report_file)}")
-        print(f"📂 Folder: {os.path.abspath(self.folder_name)}")
-        print("=" * 50)
+        # Show comprehensive test summary like ping tool
+        print("\n" + "=" * 60)
+        print("🏁 TEST COMPLETE")
+        print("=" * 60)
+        
+        # Calculate test summary statistics
+        successful_tests = [r for r in self.test_results if r["success"]]
+        failed_tests = [r for r in self.test_results if not r["success"]]
+        total_elapsed = time.time() - self.start_time if self.start_time else 0
+        
+        # Format elapsed time
+        elapsed_hours = int(total_elapsed // 3600)
+        elapsed_minutes = int((total_elapsed % 3600) // 60)
+        elapsed_seconds = int(total_elapsed % 60)
+        elapsed_str = f"{elapsed_hours:02d}:{elapsed_minutes:02d}:{elapsed_seconds:02d}"
+        
+        # Calculate speed statistics
+        if successful_tests:
+            avg_upload = sum(r["upload_mbps"] for r in successful_tests) / len(successful_tests)
+            avg_download = sum(r["download_mbps"] for r in successful_tests) / len(successful_tests)
+            max_upload = max(r["upload_mbps"] for r in successful_tests)
+            max_download = max(r["download_mbps"] for r in successful_tests)
+            min_upload = min(r["upload_mbps"] for r in successful_tests)
+            min_download = min(r["download_mbps"] for r in successful_tests)
+        else:
+            avg_upload = avg_download = max_upload = max_download = min_upload = min_download = 0
+        
+        success_rate = (len(successful_tests) / len(self.test_results)) * 100 if self.test_results else 0
+        
+        # Test Summary
+        print("📋 TEST SUMMARY:")
+        print(f"Server: {self.server} ({self.port})")
+        print(f"Duration: {elapsed_str} (planned: {self.format_duration(self.duration)})")
+        if not self.should_continue_testing() and self.running:
+            print("Status: Completed")
+        else:
+            print("Status: Interrupted")
+        print(f"System: {os.uname().sysname} {os.uname().release}" if hasattr(os, 'uname') else "System: Unknown")
+        print()
+        
+        # Results
+        print("📊 RESULTS:")
+        print(f"Total Tests: {len(self.test_results)}")
+        print(f"Successful: {len(successful_tests)}")
+        print(f"Failed: {len(failed_tests)}")
+        print(f"Success Rate: {success_rate:.2f}%")
+        if successful_tests:
+            print(f"Avg Upload: {avg_upload:.2f} Mbps")
+            print(f"Avg Download: {avg_download:.2f} Mbps")
+            print(f"Peak Upload: {max_upload:.2f} Mbps")
+            print(f"Peak Download: {max_download:.2f} Mbps")
+        print()
+        
+        # Network Quality Assessment (based on test reliability only)
+        if success_rate >= 98 and len(failed_tests) == 0:
+            quality_status = "🟢 EXCELLENT - All tests completed successfully"
+        elif success_rate >= 95:
+            quality_status = "🟡 GOOD - Minor test failures detected"
+        elif success_rate >= 85:
+            quality_status = "🟠 FAIR - Some test failures detected"
+        else:
+            quality_status = "🔴 POOR - Significant test failures detected"
+        
+        print(f"🌐 TEST RELIABILITY: {quality_status}")
+        print()
+        
+        print("📄 Generating detailed reports...")
+        print(f"Report generated: {os.path.basename(self.report_file)}")
+        print()
+        
+        print("=" * 60)
+        print("📁 REPORTS GENERATED:")
+        print(f"📝 Text Log: {os.path.abspath(self.log_file)}")
+        print(f"📄 HTML Report: {os.path.abspath(self.report_file)}")
+        print("=" * 60)
+        
+        print("💡 NEXT STEPS:")
+        print("• Open the HTML report in your browser for detailed analysis")
+        print("• Share the HTML report with your ISP or IT support team")
+        print("=" * 60)
         print("👋 Speed testing stopped.")
 
 def get_user_server_choice():
@@ -545,31 +640,34 @@ def get_test_duration():
     """Get test duration from user"""
     print("\n⏰ Test Duration Selection")
     print("=" * 25)
-    print("1. Run for 1 hour")
-    print("2. Run for 2 hours")
-    print("3. Run for 4 hours")
-    print("4. Run for 8 hours")
-    print("5. Run for 24 hours")
-    print("6. Run continuously (until stopped manually)")
-    print("7. Custom duration")
+    print("1. Run for 30 minutes")
+    print("2. Run for 1 hour")
+    print("3. Run for 2 hours")
+    print("4. Run for 4 hours")
+    print("5. Run for 8 hours")
+    print("6. Run for 24 hours")
+    print("7. Run continuously (until stopped manually)")
+    print("8. Custom duration")
     print()
     
     while True:
-        choice = input("Choose option (1-7): ").strip()
+        choice = input("Choose option (1-8): ").strip()
         
         if choice == "1":
-            return 3600  # 1 hour in seconds
+            return 1800  # 30 minutes in seconds
         elif choice == "2":
-            return 7200  # 2 hours
+            return 3600  # 1 hour in seconds
         elif choice == "3":
-            return 14400  # 4 hours
+            return 7200  # 2 hours
         elif choice == "4":
-            return 28800  # 8 hours
+            return 14400  # 4 hours
         elif choice == "5":
-            return 86400  # 24 hours
+            return 28800  # 8 hours
         elif choice == "6":
-            return None  # Run continuously
+            return 86400  # 24 hours
         elif choice == "7":
+            return None  # Run continuously
+        elif choice == "8":
             while True:
                 try:
                     hours = float(input("Enter duration in hours (0.1 to 24): ").strip())
@@ -580,7 +678,7 @@ def get_test_duration():
                 except ValueError:
                     print("❌ Please enter a valid number")
         else:
-            print("❌ Please enter 1-7")
+            print("❌ Please enter 1-8")
 
 def main():
     """Main function"""
