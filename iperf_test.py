@@ -30,17 +30,9 @@ class IperfSpeedTester:
         self.duration = duration
         self.start_time = None
         
-        # Create iperf-speed-test folder
-        self.folder_name = "iperf-speed-test"
-        try:
-            os.makedirs(self.folder_name, exist_ok=True)
-            self.log_file = os.path.join(self.folder_name, "iperf_speed_test.log")
-            self.report_file = os.path.join(self.folder_name, "iperf_speed_report.html")
-        except Exception as e:
-            print(f"⚠️  Could not create folder: {e}")
-            self.folder_name = "."
-            self.log_file = "iperf_speed_test.log"
-            self.report_file = "iperf_speed_report.html"
+        # Save files directly in the current directory (no subfolder creation)
+        self.log_file = "iperf_speed_test.log"
+        self.report_file = "iperf_speed_report.html"
         
         self.running = True
         self.test_results = []
